@@ -1,18 +1,76 @@
-# This .gitignore is appropriate for repositories deployed to GitHub Pages and using
-# a Gemfile as specified at https://github.com/github/pages-gem#conventional
+# Chrome Extension Development
+# =========================
 
-# Basic Jekyll gitignores (synchronize to Jekyll.gitignore)
-_site/
-.sass-cache/
-.jekyll-cache/
-.jekyll-metadata
+# Temporary extension files
+*.crx
+*.pem
+*.zip
 
-# Additional Ruby/bundler ignore for when you run: bundle install
-/vendor
+# Development builds
+dist/
+build/
 
-# Specific ignore for GitHub Pages
-# GitHub Pages will always use its own deployed version of pages-gem 
-# This means GitHub Pages will NOT use your Gemfile.lock and therefore it is
-# counterproductive to check this file into the repository.
-# Details at https://github.com/github/pages-gem/issues/768
-Gemfile.lock
+# Node.js (if using build tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+.atom/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Build artifacts
+*.map
+*.min.js
+*.min.css
+
+# Backup files
+*.bak
+*.backup
+*.tmp
+*~
+
+# Chrome extension specific
+# Exclude packed extensions
+*.crx
+
+# Exclude private keys
+*.pem
+
+# Exclude temporary manifest files
+manifest.json.backup
+
+# User data
+user_data/
+profiles/
