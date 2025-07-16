@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lazy Egg JS Watcher</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="title">🥚 Lazy Egg</h1>
+      <div class="stats" id="stats">
+        <span id="total-count">0</span> JS files
+        <span class="separator">•</span>
+        <span id="domain-count">0</span> domains
+      </div>
+    </header>
+
+    <div class="controls">
+      <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search JavaScript files..." />
+        <button id="clear-search" class="btn-icon" title="Clear search">✕</button>
+      </div>
+      
+      <div class="action-buttons">
+        <button id="export-btn" class="btn btn-primary" title="Export to file">
+          📥 Export
+        </button>
+        <button id="copy-btn" class="btn btn-secondary" title="Copy to clipboard">
+          📋 Copy
+        </button>
+        <button id="clear-btn" class="btn btn-danger" title="Clear all data">
+          🗑️ Clear
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">😴</div>
+        <p>No JavaScript files found yet.</p>
+        <small>Visit some websites to start collecting JS URLs.</small>
+      </div>
+
+      <div id="files-container" class="files-container hidden">
+        <div class="files-header">
+          <span id="filtered-count"></span>
+          <button id="toggle-view" class="btn-text">Group by domain</button>
+        </div>
+        <ul id="files-list" class="files-list"></ul>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <button id="settings-btn" class="btn-text">⚙️ Settings</button>
+      <span class="version">v4.0</span>
+    </footer>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button id="close-modal" class="btn-icon">✕</button>
+      </div>
+      <div class="modal-body">
+        <label class="checkbox-label">
+          <input type="checkbox" id="auto-capture" checked>
+          <span class="checkmark"></span>
+          Auto-capture JavaScript files
+        </label>
+        
+        <div class="form-group">
+          <label for="exclude-patterns">Exclude patterns (one per line):</label>
+          <textarea id="exclude-patterns" rows="4" placeholder="google-analytics&#10;gtag&#10;facebook.net"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="save-settings" class="btn btn-primary">Save</button>
+        <button id="cancel-settings" class="btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
