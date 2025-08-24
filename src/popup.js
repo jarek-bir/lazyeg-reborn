@@ -37,8 +37,11 @@ class LazyEggPopup {
 
     // Action buttons
     document
-      .getElementById("export-btn")
-      .addEventListener("click", () => this.exportFiles());
+      .getElementById("export-json-btn")
+      .addEventListener("click", () => this.exportFiles("json"));
+    document
+      .getElementById("export-txt-btn")
+      .addEventListener("click", () => this.exportFiles("txt"));
     document
       .getElementById("copy-btn")
       .addEventListener("click", () => this.copyToClipboard());
@@ -273,34 +276,44 @@ class LazyEggPopup {
     return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  async exportFiles() {
+  async exportFiles(format = "json") {
     try {
-      console.log('Export: Starting export with', this.jsFiles.length, 'files');
+      console.log('Export: Starting export with', this.jsFiles.length, 'files, format:', format);
       console.log('Export: Files to export:', this.jsFiles);
       
-      const data = {
-        exportDate: new Date().toISOString(),
-        totalFiles: this.jsFiles.length,
-        files: this.jsFiles,
-        domains: [
-          ...new Set(
-            this.jsFiles.map((url) => {
-              try {
-                return new URL(url).hostname;
-              } catch {
-                return "unknown";
-              }
-            })
-          ),
-        ],
-      };
+      let content, mimeType, fileExtension;
+      
+      if (format === "txt") {
+        // Simple TXT format - one URL per line
+        content = this.jsFiles.join("\n");
+        mimeType = "text/plain";
+        fileExtension = "txt";
+      } else {
+        // JSON format with metadata
+        const data = {
+          exportDate: new Date().toISOString(),
+          totalFiles: this.jsFiles.length,
+          files: this.jsFiles,
+          domains: [
+            ...new Set(
+              this.jsFiles.map((url) => {
+                try {
+                  return new URL(url).hostname;
+                } catch {
+                  return "unknown";
+                }
+              })
+            ),
+          ],
+        };
+        content = JSON.stringify(data, null, 2);
+        mimeType = "application/json";
+        fileExtension = "json";
+      }
 
-      console.log('Export: Prepared data:', data);
+      console.log('Export: Prepared data, format:', format, 'size:', content.length);
 
-      const blob = new Blob([JSON.stringify(data, null, 2)], {
-        type: "application/json",
-      });
-
+      const blob = new Blob([content], { type: mimeType });
       console.log('Export: Created blob, size:', blob.size);
 
       const url = URL.createObjectURL(blob);
@@ -308,14 +321,14 @@ class LazyEggPopup {
       a.href = url;
       a.download = `lazy-egg-js-files-${
         new Date().toISOString().split("T")[0]
-      }.json`;
+      }.${fileExtension}`;
       document.body.appendChild(a);
-      console.log('Export: Triggering download...');
+      console.log('Export: Triggering download...', a.download);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      this.showNotification("Files exported successfully!");
+      this.showNotification(`Files exported to ${format.toUpperCase()} successfully!`);
     } catch (error) {
       console.error("Export failed:", error);
       this.showNotification("Export failed!", "error");
