@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lazy Egg JS Watcher Enhanced</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Enhanced styles for new features */
+    .feature-tabs {
+      display: flex;
+      border-bottom: 2px solid #e0e0e0;
+      margin-bottom: 16px;
+    }
+    
+    .tab-button {
+      flex: 1;
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 500;
+      color: #666;
+      transition: all 0.2s;
+    }
+    
+    .tab-button.active {
+      color: #00ff90;
+      border-bottom: 2px solid #00ff90;
+    }
+    
+    .tab-content {
+      display: none;
+      min-height: 200px;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .stat-card {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 10px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .alert-banner {
+      background: #ff4757;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      display: none;
+    }
+    
+    .alert-banner.show {
+      display: block;
+    }
+    
+    .severity-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 9px;
+      font-weight: 600;
+      text-transform: uppercase;
+      margin-left: 4px;
+    }
+    
+    .severity-critical { background: #ff4757; color: white; }
+    .severity-high { background: #ff6b35; color: white; }
+    .severity-medium { background: #ffa502; color: white; }
+    .severity-low { background: #26de81; color: white; }
+    
+    .export-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .export-btn {
+      padding: 6px 8px;
+      font-size: 10px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .export-btn:hover {
+      background: #f0f0f0;
+    }
+    
+    .finding-item {
+      background: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+    
+    .finding-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    
+    .finding-url {
+      color: #666;
+      font-size: 9px;
+      word-break: break-all;
+    }
+    
+    .domain-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 8px;
+      margin-bottom: 4px;
+      background: #f8f9fa;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+    
+    .risk-score {
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 8px;
+      font-weight: 600;
+    }
+    
+    .risk-low { background: #26de81; color: white; }
+    .risk-medium { background: #ffa502; color: white; }
+    .risk-high { background: #ff4757; color: white; }
+    
+    .snapshot-item {
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 8px;
+      margin-bottom: 8px;
+      font-size: 11px;
+    }
+    
+    .snapshot-header {
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .snapshot-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 4px;
+      font-size: 9px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="title">
+        <h1>Lazy Egg Enhanced</h1>
+        <span class="version">v5.0</span>
+      </div>
+      <div class="stats">
+        <div class="stat-item">
+          <span class="stat-value" id="total-count">0</span>
+          <span class="stat-label">JS Files</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-value" id="alerts-count">0</span>
+          <span class="stat-label">Alerts</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Banner -->
+    <div class="alert-banner" id="alert-banner">
+      <span id="alert-message"></span>
+    </div>
+
+    <!-- Feature Tabs -->
+    <div class="feature-tabs">
+      <button class="tab-button active" data-tab="overview">Overview</button>
+      <button class="tab-button" data-tab="endpoints">Endpoints</button>
+      <button class="tab-button" data-tab="secrets">Secrets</button>
+      <button class="tab-button" data-tab="domains">Domains</button>
+      <button class="tab-button" data-tab="snapshots">Snapshots</button>
+    </div>
+
+    <!-- Tab Contents -->
+    
+    <!-- Overview Tab -->
+    <div class="tab-content active" id="overview-tab">
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number" id="endpoints-count">0</div>
+          <div class="stat-label">Endpoints</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="secrets-count">0</div>
+          <div class="stat-label">Secrets</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="domains-count">0</div>
+          <div class="stat-label">Domains</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="snapshots-count">0</div>
+          <div class="stat-label">Snapshots</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn primary" id="export-comprehensive">
+          📊 Export Comprehensive Report
+        </button>
+        <button class="btn" id="clear-all-data">Clear All Data</button>
+      </div>
+    </div>
+
+    <!-- Endpoints Tab -->
+    <div class="tab-content" id="endpoints-tab">
+      <div class="section-header">
+        <h3>Discovered Endpoints</h3>
+        <span class="count" id="endpoints-total">0 endpoints</span>
+      </div>
+      
+      <div class="export-grid">
+        <button class="export-btn" id="export-endpoints-json">JSON</button>
+        <button class="export-btn" id="export-endpoints-burp">Burp Suite</button>
+        <button class="export-btn" id="export-endpoints-linkfinder">LinkFinder</button>
+        <button class="export-btn" id="export-endpoints-csv">CSV</button>
+      </div>
+
+      <div class="content-area" id="endpoints-list">
+        <div class="empty-state">No endpoints discovered yet</div>
+      </div>
+    </div>
+
+    <!-- Secrets Tab -->
+    <div class="tab-content" id="secrets-tab">
+      <div class="section-header">
+        <h3>Secret Detection</h3>
+        <span class="count" id="secrets-total">0 secrets</span>
+      </div>
+      
+      <div class="export-grid">
+        <button class="export-btn" id="export-secrets-json">JSON</button>
+        <button class="export-btn" id="export-secrets-sarif">SARIF</button>
+        <button class="export-btn" id="export-secrets-csv">CSV</button>
+        <button class="export-btn" id="export-secrets-txt">Report</button>
+      </div>
+
+      <div class="content-area" id="secrets-list">
+        <div class="empty-state">No secrets detected</div>
+      </div>
+    </div>
+
+    <!-- Domains Tab -->
+    <div class="tab-content" id="domains-tab">
+      <div class="section-header">
+        <h3>Domain Analysis</h3>
+        <span class="count" id="domains-total">0 domains</span>
+      </div>
+
+      <div class="content-area" id="domains-list">
+        <div class="empty-state">No domain data available</div>
+      </div>
+    </div>
+
+    <!-- Snapshots Tab -->
+    <div class="tab-content" id="snapshots-tab">
+      <div class="section-header">
+        <h3>Domain Snapshots</h3>
+        <span class="count" id="snapshots-total">0 snapshots</span>
+      </div>
+
+      <div class="actions" style="margin-bottom: 12px;">
+        <button class="btn" id="create-snapshot">📸 Create Snapshot</button>
+      </div>
+
+      <div class="content-area" id="snapshots-list">
+        <div class="empty-state">No snapshots available</div>
+      </div>
+    </div>
+
+    <!-- Original Files Section (Hidden by default, accessible via overview) -->
+    <div class="hidden" id="js-files-section">
+      <div class="search-container">
+        <div class="search-box">
+          <input type="text" id="search-input" placeholder="Search JavaScript files...">
+          <button id="clear-search" class="btn-icon">×</button>
+        </div>
+        <div class="search-info">
+          <span id="filtered-count">0 files</span>
+        </div>
+      </div>
+
+      <div class="view-controls">
+        <button id="toggle-view" class="btn">Group by domain</button>
+        <button id="settings-btn" class="btn-icon">⚙️</button>
+      </div>
+
+      <div id="empty-state" class="empty-state">
+        <div class="empty-icon">📄</div>
+        <h3>No JavaScript files detected</h3>
+        <p>Navigate to a website to start monitoring JavaScript files automatically.</p>
+      </div>
+
+      <div id="files-container" class="hidden">
+        <ul id="files-list" class="files-list"></ul>
+      </div>
+
+      <div class="actions">
+        <button id="export-btn" class="btn primary">📁 Export Files</button>
+        <button id="copy-btn" class="btn">📋 Copy URLs</button>
+        <button id="clear-btn" class="btn danger">🗑️ Clear All</button>
+      </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Settings</h3>
+          <button id="close-modal" class="btn-icon">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="setting-group">
+            <label>
+              <input type="checkbox" id="auto-capture"> 
+              Auto-capture JavaScript files
+            </label>
+          </div>
+          <div class="setting-group">
+            <label>
+              <input type="checkbox" id="enable-secret-detection"> 
+              Enable secret detection
+            </label>
+          </div>
+          <div class="setting-group">
+            <label>
+              <input type="checkbox" id="enable-endpoint-extraction"> 
+              Enable endpoint extraction
+            </label>
+          </div>
+          <div class="setting-group">
+            <label>
+              <input type="checkbox" id="alert-critical-secrets"> 
+              Alert on critical secrets
+            </label>
+          </div>
+          <div class="setting-group">
+            <label for="exclude-patterns">Exclude patterns (one per line):</label>
+            <textarea id="exclude-patterns" rows="4" placeholder="google-analytics&#10;gtag&#10;facebook.net"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="save-settings" class="btn primary">Save</button>
+          <button id="cancel-settings" class="btn">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="enhanced-export.js"></script>
+  <script src="popup-enhanced.js"></script>
+</body>
+</html>
