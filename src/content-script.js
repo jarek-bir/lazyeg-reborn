@@ -31,6 +31,7 @@
       this.alertSystem = null;
       this.processedContent = new Map();
       this.suspiciousFindings = [];
+      this.dataInterval = null; // Track interval for cleanup
       
       this.init();
     }
@@ -53,7 +54,7 @@
         this.trackExistingScripts();
 
         // Send data periodically to avoid too many messages
-        setInterval(() => this.sendData(), 3000);
+        this.dataInterval = setInterval(() => this.sendData(), 5000); // Reduced frequency
         
         // Auto-snapshot after 30 seconds
         setTimeout(() => this.finalizeSnapshot(), 30000);
@@ -71,7 +72,11 @@
       this.hookScriptCreation();
       this.hookFetch();
       this.trackExistingScripts();
-      setInterval(() => this.sendData(), 2000);
+      
+      // Only set interval if not already set
+      if (!this.dataInterval) {
+        this.dataInterval = setInterval(() => this.sendData(), 5000);
+      }
     }
 
     setupPerformanceObserver() {
@@ -170,6 +175,15 @@
 
     async processJavaScriptFile(url) {
       if (this.processedContent.has(url)) return;
+      
+      // Prevent memory bloat - limit cache size
+      if (this.processedContent.size > 100) {
+        // Remove oldest entries
+        const entries = Array.from(this.processedContent.keys());
+        for (let i = 0; i < 20; i++) {
+          this.processedContent.delete(entries[i]);
+        }
+      }
       
       try {
         // Fetch and analyze JavaScript content
@@ -378,6 +392,17 @@
 
     stop() {
       this.isTracking = false;
+      
+      // Clear interval to prevent memory leaks
+      if (this.dataInterval) {
+        clearInterval(this.dataInterval);
+        this.dataInterval = null;
+      }
+      
+      // Clear memory caches
+      this.processedContent.clear();
+      this.suspiciousFindings = [];
+      this.jsFiles.clear();
       
       // Finalize snapshot before stopping
       if (this.snapshotEngine) {
