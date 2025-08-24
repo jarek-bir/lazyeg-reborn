@@ -24,7 +24,7 @@
     {
       "matches": ["http://*/*", "https://*/*"],
       "js": ["src/content-script.js"],
-      "run_at": "document_start"
+      "run_at": "document_idle"
     }
   ],
   "content_security_policy": {

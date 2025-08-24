@@ -40,6 +40,20 @@
     }
 
     setupBasicTracking() {
+      // Wait for DOM to be ready
+      if (document.readyState === 'loading') {
+        console.log('Lazy Egg: DOM not ready, waiting...');
+        document.addEventListener('DOMContentLoaded', () => {
+          console.log('Lazy Egg: DOM ready, starting tracking');
+          this.startTracking();
+        });
+      } else {
+        console.log('Lazy Egg: DOM already ready, starting tracking');
+        this.startTracking();
+      }
+    }
+
+    startTracking() {
       this.trackExistingScripts();
       this.setupPerformanceObserver();
       // NO FETCH HOOKING - causes performance issues
@@ -71,12 +85,18 @@
       const scripts = document.querySelectorAll("script[src]");
       console.log(`Lazy Egg: Found ${scripts.length} script tags`);
       
-      scripts.forEach((script) => {
-        console.log('Lazy Egg: Checking script:', script.src);
-        if (this.isJavaScriptFile(script.src)) {
+      // Also check scripts without src attribute but with inline content
+      const allScripts = document.querySelectorAll("script");
+      console.log(`Lazy Egg: Total script tags (including inline): ${allScripts.length}`);
+      
+      scripts.forEach((script, index) => {
+        console.log(`Lazy Egg: Script ${index}:`, script.src);
+        if (script.src && this.isJavaScriptFile(script.src)) {
           const normalized = this.normalizeUrl(script.src);
           this.jsFiles.add(normalized);
           console.log('Lazy Egg: Added JS file:', normalized);
+        } else {
+          console.log('Lazy Egg: Skipped script (no src or not JS):', script.src);
         }
       });
       
@@ -123,12 +143,18 @@
     }
 
     isJavaScriptFile(url) {
+      if (!url || url.trim() === '') {
+        console.log('Lazy Egg: Empty URL, skipping');
+        return false;
+      }
+      
       try {
         const urlObj = new URL(url);
         const pathname = urlObj.pathname.toLowerCase();
 
         // Check file extension
         if (pathname.endsWith(".js") || pathname.endsWith(".mjs")) {
+          console.log(`Lazy Egg: ${url} - JS by extension`);
           return true;
         }
 
@@ -140,10 +166,10 @@
         
         const isJS = jsPatterns.some((pattern) => pathname.includes(pattern));
         
-        console.log(`Lazy Egg: isJS check for ${url}: ${isJS}`);
+        console.log(`Lazy Egg: isJS check for ${url}: ${isJS} (patterns)`);
         return isJS;
       } catch (error) {
-        console.log(`Lazy Egg: URL parse error for ${url}:`, error);
+        console.log(`Lazy Egg: URL parse error for "${url}":`, error);
         return false;
       }
     }
