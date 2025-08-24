@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "Lazy Egg JS Watcher",
-  "version": "4.0",
-  "description": "Advanced JavaScript URL monitor and analyzer with export capabilities.",
+  "name": "Lazy Egg JS Watcher Enhanced",
+  "version": "5.0",
+  "description": "Advanced JavaScript monitoring with endpoint extraction, secret detection, domain categorization, and security analysis.",
   "permissions": [
     "scripting",
     "storage",
-    "activeTab"
+    "activeTab",
+    "notifications"
   ],
   "host_permissions": [
     "http://*/*",
@@ -16,11 +17,22 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Lazy Egg JS Watcher",
-    "default_popup": "popup.html"
+    "default_title": "Lazy Egg JS Watcher Enhanced",
+    "default_popup": "popup-enhanced.html"
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "linkfinder-lite.js",
+        "secret-detector.js",
+        "domain-categorizer.js",
+        "domain-snapshot.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
 
