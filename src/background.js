@@ -63,17 +63,17 @@ class LazyEggEnhancedBackground {
         await chrome.scripting.executeScript({
           target: { tabId: tabId },
           files: [
-            "linkfinder-lite.js",
-            "secret-detector.js", 
-            "domain-categorizer.js",
-            "domain-snapshot.js"
+            "modules/linkfinder-lite.js",
+            "modules/secret-detector.js", 
+            "modules/domain-categorizer.js",
+            "modules/domain-snapshot.js"
           ],
         });
 
         // Then inject the main content script
         await chrome.scripting.executeScript({
           target: { tabId: tabId },
-          files: ["content-script.js"],
+          files: ["src/content-script.js"],
         });
       } catch (error) {
         console.warn("Failed to inject enhanced content script:", error);
@@ -82,7 +82,7 @@ class LazyEggEnhancedBackground {
         try {
           await chrome.scripting.executeScript({
             target: { tabId: tabId },
-            files: ["content-script.js"],
+            files: ["src/content-script.js"],
           });
         } catch (fallbackError) {
           console.warn("Failed to inject any content script:", fallbackError);
