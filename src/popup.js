@@ -1,6 +1,9 @@
 // Popup script for Lazy Egg JS Watcher
+console.log('POPUP DEBUG: Loading LIGHTWEIGHT popup.js (not enhanced!)');
+
 class LazyEggPopup {
   constructor() {
+    console.log('POPUP DEBUG: Creating LazyEggPopup (LIGHTWEIGHT VERSION)');
     this.jsFiles = [];
     this.filteredFiles = [];
     this.groupByDomain = false;
