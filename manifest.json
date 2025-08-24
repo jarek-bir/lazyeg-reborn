@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Lazy Egg JS Watcher Enhanced",
-  "version": "5.0",
+  "version": "5.1",
   "description": "Advanced JavaScript monitoring with endpoint extraction, secret detection, domain categorization, and security analysis.",
   "permissions": [
     "scripting",
@@ -18,7 +18,7 @@
   },
   "action": {
     "default_title": "Lazy Egg JS Watcher Enhanced",
-    "default_popup": "src/popup.html"
+    "default_popup": "src/popup-new.html"
   },
   "content_scripts": [
     {
