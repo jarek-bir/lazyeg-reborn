@@ -52,43 +52,9 @@ class LazyEggEnhancedBackground {
   }
 
   async handleTabUpdate(tabId, changeInfo, tab) {
-    // Only inject when page is fully loaded and it's a valid HTTP(S) URL
-    if (
-      changeInfo.status === "complete" &&
-      tab.url &&
-      (tab.url.startsWith("http://") || tab.url.startsWith("https://"))
-    ) {
-      try {
-        // Inject required modules first
-        await chrome.scripting.executeScript({
-          target: { tabId: tabId },
-          files: [
-            "modules/linkfinder-lite.js",
-            "modules/secret-detector.js", 
-            "modules/domain-categorizer.js",
-            "modules/domain-snapshot.js"
-          ],
-        });
-
-        // Then inject the main content script
-        await chrome.scripting.executeScript({
-          target: { tabId: tabId },
-          files: ["src/content-script.js"],
-        });
-      } catch (error) {
-        console.warn("Failed to inject enhanced content script:", error);
-        
-        // Fallback to basic content script only
-        try {
-          await chrome.scripting.executeScript({
-            target: { tabId: tabId },
-            files: ["src/content-script.js"],
-          });
-        } catch (fallbackError) {
-          console.warn("Failed to inject any content script:", fallbackError);
-        }
-      }
-    }
+    // Manual injection only - no automatic injection to prevent performance issues
+    // Content script will be injected only when user clicks the extension icon
+    return;
   }
 
   handleMessage(message, sender, sendResponse) {

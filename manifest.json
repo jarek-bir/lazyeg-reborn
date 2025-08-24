@@ -20,13 +20,6 @@
     "default_title": "Lazy Egg JS Watcher Enhanced",
     "default_popup": "src/popup-enhanced.html"
   },
-  "content_scripts": [
-    {
-      "matches": ["http://*/*", "https://*/*"],
-      "js": ["src/content-script.js"],
-      "run_at": "document_start"
-    }
-  ],
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
