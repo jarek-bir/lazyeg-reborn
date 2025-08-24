@@ -8,6 +8,21 @@
   }
   window.lazyEggInjected = true;
 
+  // EMERGENCY DISABLE - uncomment to disable extension
+  // console.log('Lazy Egg Extension disabled for performance');
+  // return;
+
+  // Skip heavy sites that cause performance issues
+  const heavyHosts = [
+    'twitter.com', 'facebook.com', 'instagram.com', 'linkedin.com',
+    'youtube.com', 'netflix.com', 'twitch.tv', 'reddit.com'
+  ];
+  
+  if (heavyHosts.some(host => window.location.hostname.includes(host))) {
+    console.log('Lazy Egg: Skipping heavy site:', window.location.hostname);
+    return;
+  }
+
   // Load required modules
   function loadModule(src) {
     return new Promise((resolve, reject) => {
@@ -123,6 +138,12 @@
     }
 
     hookFetch() {
+      // Skip fetch hooking on heavy sites to prevent performance issues
+      if (window.location.hostname.includes('twitter.com') || 
+          window.location.hostname.includes('facebook.com')) {
+        return;
+      }
+      
       const originalFetch = window.fetch;
       window.fetch = (...args) => {
         const url = args[0];
@@ -176,6 +197,12 @@
     async processJavaScriptFile(url) {
       if (this.processedContent.has(url)) return;
       
+      // Skip processing large files or too many files to prevent hanging
+      if (this.processedContent.size > 50) {
+        console.log('Lazy Egg: Skipping JS analysis, too many files processed');
+        return;
+      }
+      
       // Prevent memory bloat - limit cache size
       if (this.processedContent.size > 100) {
         // Remove oldest entries
@@ -186,11 +213,27 @@
       }
       
       try {
-        // Fetch and analyze JavaScript content
-        const response = await fetch(url);
-        if (!response.ok) return;
+        // Skip very large files
+        const response = await fetch(url, { method: 'HEAD' });
+        const contentLength = response.headers.get('content-length');
+        if (contentLength && parseInt(contentLength) > 1000000) { // Skip files > 1MB
+          console.log('Lazy Egg: Skipping large file:', url);
+          return;
+        }
         
-        const content = await response.text();
+        // Fetch and analyze JavaScript content with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+        
+        const fullResponse = await fetch(url, { 
+          signal: controller.signal,
+          cache: 'force-cache' // Use browser cache when possible
+        });
+        clearTimeout(timeoutId);
+        
+        if (!fullResponse.ok) return;
+        
+        const content = await fullResponse.text();
         this.processedContent.set(url, content);
 
         // Extract endpoints using LinkFinder
