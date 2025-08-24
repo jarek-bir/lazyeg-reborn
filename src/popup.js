@@ -9,6 +9,9 @@ class LazyEggPopup {
     this.groupByDomain = false;
     this.searchTerm = "";
     this.settings = {};
+    this.currentTab = 'files';
+    this.securityAnalyzer = new SecurityAnalyzer();
+    this.securityReport = null;
 
     this.init();
   }
@@ -21,6 +24,10 @@ class LazyEggPopup {
   }
 
   setupEventListeners() {
+    // Tab navigation
+    document.getElementById("files-tab").addEventListener("click", () => this.switchTab('files'));
+    document.getElementById("security-tab").addEventListener("click", () => this.switchTab('security'));
+
     // Search functionality
     document.getElementById("search-input").addEventListener("input", (e) => {
       this.searchTerm = e.target.value.toLowerCase();
@@ -48,6 +55,14 @@ class LazyEggPopup {
     document
       .getElementById("clear-btn")
       .addEventListener("click", () => this.clearData());
+
+    // Security buttons
+    document
+      .getElementById("analyze-btn")
+      .addEventListener("click", () => this.runSecurityAnalysis());
+    document
+      .getElementById("export-security-btn")
+      .addEventListener("click", () => this.exportSecurityReport());
 
     // View toggle
     document.getElementById("toggle-view").addEventListener("click", () => {
@@ -440,6 +455,140 @@ class LazyEggPopup {
         }
       }, 300);
     }, 3000);
+  }
+
+  switchTab(tabName) {
+    this.currentTab = tabName;
+    
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`${tabName}-tab`).classList.add('active');
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(`${tabName}-view`).classList.add('active');
+    
+    // Update main content visibility
+    if (tabName === 'files') {
+      this.render();
+    } else if (tabName === 'security') {
+      this.renderSecurityView();
+    }
+  }
+
+  async runSecurityAnalysis() {
+    if (this.jsFiles.length === 0) {
+      this.showNotification("No files to analyze", "error");
+      return;
+    }
+
+    document.getElementById("analyze-btn").textContent = "🔍 Analyzing...";
+    document.getElementById("analyze-btn").disabled = true;
+
+    try {
+      // Get current domain
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      const currentDomain = tab ? new URL(tab.url).hostname : 'unknown';
+
+      this.securityReport = this.securityAnalyzer.generateSecurityReport(this.jsFiles, currentDomain);
+      this.renderSecurityView();
+      this.showNotification("Security analysis completed!");
+    } catch (error) {
+      console.error("Security analysis failed:", error);
+      this.showNotification("Analysis failed", "error");
+    } finally {
+      document.getElementById("analyze-btn").textContent = "🔍 Analyze";
+      document.getElementById("analyze-btn").disabled = false;
+    }
+  }
+
+  renderSecurityView() {
+    const securityContainer = document.getElementById("security-container");
+    const filesContainer = document.getElementById("files-container");
+    const emptyState = document.getElementById("empty-state");
+
+    if (!this.securityReport) {
+      securityContainer.classList.add("hidden");
+      filesContainer.classList.add("hidden");
+      emptyState.classList.remove("hidden");
+      return;
+    }
+
+    emptyState.classList.add("hidden");
+    filesContainer.classList.add("hidden");
+    securityContainer.classList.remove("hidden");
+
+    // Update security summary
+    this.updateSecuritySummary();
+    this.renderSecurityAlerts();
+  }
+
+  updateSecuritySummary() {
+    const report = this.securityReport;
+    
+    // Calculate overall risk
+    let overallRisk = 'low';
+    if (report.riskDistribution.critical > 0) overallRisk = 'critical';
+    else if (report.riskDistribution.high > 0) overallRisk = 'high';
+    else if (report.riskDistribution.medium > 0) overallRisk = 'medium';
+
+    document.getElementById("overall-risk").textContent = overallRisk.toUpperCase();
+    document.getElementById("overall-risk").className = `risk-badge risk-${overallRisk}`;
+    document.getElementById("external-count").textContent = report.externalFiles;
+    document.getElementById("cdn-count").textContent = report.cdnFiles;
+    document.getElementById("outdated-count").textContent = report.outdatedLibraries;
+  }
+
+  renderSecurityAlerts() {
+    const alertsContainer = document.getElementById("security-alerts");
+    alertsContainer.innerHTML = "";
+
+    const highRiskFiles = this.securityReport.highRiskFiles;
+    
+    if (highRiskFiles.length === 0) {
+      alertsContainer.innerHTML = '<div class="security-alert"><div class="alert-title">✅ No high-risk files detected</div></div>';
+      return;
+    }
+
+    highRiskFiles.forEach(analysis => {
+      const alert = document.createElement('div');
+      alert.className = `security-alert ${analysis.riskLevel}`;
+      
+      const reasons = analysis.suspiciousReasons.join(', ');
+      
+      alert.innerHTML = `
+        <div class="alert-title">⚠️ ${analysis.riskLevel.toUpperCase()} Risk File</div>
+        <div class="alert-description">${reasons}</div>
+        <div class="alert-url">${analysis.url}</div>
+      `;
+      
+      alertsContainer.appendChild(alert);
+    });
+  }
+
+  async exportSecurityReport() {
+    if (!this.securityReport) {
+      this.showNotification("Run analysis first", "error");
+      return;
+    }
+
+    try {
+      const content = JSON.stringify(this.securityReport, null, 2);
+      const blob = new Blob([content], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `lazy-egg-security-report-${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      this.showNotification("Security report exported!");
+    } catch (error) {
+      console.error("Export failed:", error);
+      this.showNotification("Export failed!", "error");
+    }
   }
 }
 

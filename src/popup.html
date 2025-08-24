@@ -18,24 +18,61 @@
     </header>
 
     <div class="controls">
-      <div class="search-container">
-        <input type="text" id="search-input" placeholder="Search JavaScript files..." />
-        <button id="clear-search" class="btn-icon" title="Clear search">✕</button>
+      <div class="tab-navigation">
+        <button id="files-tab" class="tab-btn active">📄 Files</button>
+        <button id="security-tab" class="tab-btn">🔒 Security</button>
       </div>
-      
-      <div class="action-buttons">
-        <button id="export-json-btn" class="btn btn-primary" title="Export to JSON file">
-          📥 JSON
-        </button>
-        <button id="export-txt-btn" class="btn btn-primary" title="Export to TXT file">
-          📄 TXT
-        </button>
-        <button id="copy-btn" class="btn btn-secondary" title="Copy to clipboard">
-          📋 Copy
-        </button>
-        <button id="clear-btn" class="btn btn-danger" title="Clear all data">
-          🗑️ Clear
-        </button>
+
+      <div id="files-view" class="tab-content active">
+        <div class="search-container">
+          <input type="text" id="search-input" placeholder="Search JavaScript files..." />
+          <button id="clear-search" class="btn-icon" title="Clear search">✕</button>
+        </div>
+        
+        <div class="action-buttons">
+          <button id="export-json-btn" class="btn btn-primary" title="Export to JSON file">
+            📥 JSON
+          </button>
+          <button id="export-txt-btn" class="btn btn-primary" title="Export to TXT file">
+            📄 TXT
+          </button>
+          <button id="copy-btn" class="btn btn-secondary" title="Copy to clipboard">
+            📋 Copy
+          </button>
+          <button id="clear-btn" class="btn btn-danger" title="Clear all data">
+            🗑️ Clear
+          </button>
+        </div>
+      </div>
+
+      <div id="security-view" class="tab-content">
+        <div class="security-summary" id="security-summary">
+          <div class="summary-item">
+            <span class="label">Risk Level:</span>
+            <span id="overall-risk" class="risk-badge">Analyzing...</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">External Files:</span>
+            <span id="external-count">-</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">CDN Files:</span>
+            <span id="cdn-count">-</span>
+          </div>
+          <div class="summary-item">
+            <span class="label">Outdated Libraries:</span>
+            <span id="outdated-count">-</span>
+          </div>
+        </div>
+        
+        <div class="action-buttons">
+          <button id="analyze-btn" class="btn btn-primary" title="Run security analysis">
+            🔍 Analyze
+          </button>
+          <button id="export-security-btn" class="btn btn-secondary" title="Export security report">
+            📊 Report
+          </button>
+        </div>
       </div>
     </div>
 
@@ -52,6 +89,11 @@
           <button id="toggle-view" class="btn-text">Group by domain</button>
         </div>
         <ul id="files-list" class="files-list"></ul>
+      </div>
+
+      <div id="security-container" class="security-container hidden">
+        <div id="security-alerts" class="security-alerts"></div>
+        <div id="security-details" class="security-details"></div>
       </div>
     </div>
 
@@ -87,6 +129,7 @@
     </div>
   </div>
 
+  <script src="security-analyzer.js"></script>
   <script src="popup.js"></script>
 </body>
 </html>

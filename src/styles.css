@@ -443,3 +443,127 @@ body {
   background: rgba(255, 255, 0, 0.3);
   border-radius: 2px;
 }
+
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 16px;
+  background: #2a2a2a;
+  border-radius: 8px;
+  padding: 4px;
+}
+
+.tab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: #888;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.tab-btn.active {
+  background: #00ff90;
+  color: #000;
+}
+
+.tab-btn:hover:not(.active) {
+  background: #333;
+  color: #ccc;
+}
+
+/* Tab Content */
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Security Styles */
+.security-summary {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.summary-item:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  font-size: 12px;
+  color: #ccc;
+}
+
+.risk-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.risk-low { background: #00ff90; color: #000; }
+.risk-medium { background: #ffa500; color: #000; }
+.risk-high { background: #ff6b35; color: #fff; }
+.risk-critical { background: #ff4757; color: #fff; }
+
+.security-alerts {
+  margin-bottom: 16px;
+}
+
+.security-alert {
+  background: #2a1810;
+  border-left: 4px solid #ff6b35;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 0 6px 6px 0;
+}
+
+.security-alert.critical {
+  background: #2a1015;
+  border-left-color: #ff4757;
+}
+
+.security-alert.high {
+  background: #2a1810;
+  border-left-color: #ff6b35;
+}
+
+.security-alert.medium {
+  background: #2a2010;
+  border-left-color: #ffa500;
+}
+
+.alert-title {
+  font-weight: 600;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.alert-description {
+  font-size: 11px;
+  color: #ccc;
+  margin-bottom: 4px;
+}
+
+.alert-url {
+  font-size: 10px;
+  color: #00ff90;
+  word-break: break-all;
+}
