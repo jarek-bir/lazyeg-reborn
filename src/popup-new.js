@@ -1,6 +1,5 @@
 // Popup script for Lazy Egg JS Watcher
-console.log('POPUP DEBUG: Loading LIGHTWEIGHT popup.js (not enhanced!)');
-alert('DEBUG: Loading LIGHTWEIGHT popup.js!');
+console.log('POPUP DEBUG: Loading LIGHTWEIGHT popup-new.js (not enhanced!)');
 
 class LazyEggPopup {
   constructor() {
