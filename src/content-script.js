@@ -68,26 +68,45 @@
 
     trackExistingScripts() {
       // Track scripts that are already loaded - simple version
-      document.querySelectorAll("script[src]").forEach((script) => {
+      const scripts = document.querySelectorAll("script[src]");
+      console.log(`Lazy Egg: Found ${scripts.length} script tags`);
+      
+      scripts.forEach((script) => {
+        console.log('Lazy Egg: Checking script:', script.src);
         if (this.isJavaScriptFile(script.src)) {
-          this.jsFiles.add(this.normalizeUrl(script.src));
+          const normalized = this.normalizeUrl(script.src);
+          this.jsFiles.add(normalized);
+          console.log('Lazy Egg: Added JS file:', normalized);
         }
       });
+      
+      console.log(`Lazy Egg: Total JS files collected: ${this.jsFiles.size}`);
     }
 
     sendData() {
+      console.log(`Lazy Egg: sendData called, files: ${this.jsFiles.size}, lastSent: ${this.lastSentCount}`);
+      
       if (this.jsFiles.size > this.lastSentCount) {
+        const dataToSend = Array.from(this.jsFiles);
+        console.log('Lazy Egg: Sending JS files:', dataToSend);
+        
         // Send basic JS files data only
         chrome.runtime
           .sendMessage({
             type: "saveJsFiles",
-            data: Array.from(this.jsFiles),
+            data: dataToSend,
           })
-          .catch(() => {
+          .then(() => {
+            console.log('Lazy Egg: Data sent successfully');
+          })
+          .catch((error) => {
+            console.error('Lazy Egg: Failed to send data:', error);
             this.isTracking = false;
           });
 
         this.lastSentCount = this.jsFiles.size;
+      } else {
+        console.log('Lazy Egg: No new files to send');
       }
     }
 
@@ -113,10 +132,18 @@
           return true;
         }
 
-        // Check for common JS patterns in URL
-        const jsPatterns = ["/js/", "/javascript/", "/scripts/"];
-        return jsPatterns.some((pattern) => pathname.includes(pattern));
-      } catch {
+        // More patterns for JS detection
+        const jsPatterns = [
+          "/js/", "/javascript/", "/scripts/", "/static/js/",
+          "jquery", "angular", "react", "vue", "bootstrap"
+        ];
+        
+        const isJS = jsPatterns.some((pattern) => pathname.includes(pattern));
+        
+        console.log(`Lazy Egg: isJS check for ${url}: ${isJS}`);
+        return isJS;
+      } catch (error) {
+        console.log(`Lazy Egg: URL parse error for ${url}:`, error);
         return false;
       }
     }

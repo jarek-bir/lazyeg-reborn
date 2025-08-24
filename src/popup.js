@@ -86,8 +86,12 @@ class LazyEggPopup {
 
   async loadData() {
     try {
+      console.log('Popup: Loading data from storage...');
       const result = await chrome.storage.local.get(["jsFiles"]);
+      console.log('Popup: Storage result:', result);
       this.jsFiles = result.jsFiles || [];
+      console.log('Popup: Loaded JS files count:', this.jsFiles.length);
+      console.log('Popup: First few files:', this.jsFiles.slice(0, 5));
       this.filterFiles();
       this.updateStats();
     } catch (error) {
@@ -268,6 +272,9 @@ class LazyEggPopup {
 
   async exportFiles() {
     try {
+      console.log('Export: Starting export with', this.jsFiles.length, 'files');
+      console.log('Export: Files to export:', this.jsFiles);
+      
       const data = {
         exportDate: new Date().toISOString(),
         totalFiles: this.jsFiles.length,
@@ -285,9 +292,13 @@ class LazyEggPopup {
         ],
       };
 
+      console.log('Export: Prepared data:', data);
+
       const blob = new Blob([JSON.stringify(data, null, 2)], {
         type: "application/json",
       });
+
+      console.log('Export: Created blob, size:', blob.size);
 
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -296,6 +307,7 @@ class LazyEggPopup {
         new Date().toISOString().split("T")[0]
       }.json`;
       document.body.appendChild(a);
+      console.log('Export: Triggering download...');
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
