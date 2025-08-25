@@ -19,15 +19,78 @@ class SecurityAnalyzer {
       'cdn.rawgit.com'
     ];
 
+    // Trusted enterprise platforms and cloud providers
+    this.trustedPlatforms = {
+      'atlassian': {
+        patterns: [/atlassian/, /jira/, /confluence/, /bitbucket/i],
+        ipRanges: ['54.68.', '34.210.', '52.', '18.'], // AWS US-West
+        riskReduction: 30
+      },
+      'microsoft': {
+        patterns: [/microsoft/, /office365/, /sharepoint/, /teams/i],
+        ipRanges: ['13.', '20.', '40.', '52.'],
+        riskReduction: 25
+      },
+      'google': {
+        patterns: [/google/, /googleapis/, /gstatic/, /youtube/i],
+        ipRanges: ['8.8.', '35.', '34.'],
+        riskReduction: 25
+      },
+      'aws': {
+        patterns: [/amazonaws/, /cloudfront/, /aws/i],
+        ipRanges: ['54.', '52.', '18.', '34.', '35.'],
+        riskReduction: 20
+      },
+      'cloudflare': {
+        patterns: [/cloudflare/, /cf-/i],
+        ipRanges: ['104.', '172.', '173.'],
+        riskReduction: 15
+      }
+    };
+
     this.suspiciousPatterns = [
-      /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/,  // IP addresses
-      /\.tk$|\.ml$|\.ga$|\.cf$/,          // Suspicious TLDs
-      /[a-z0-9]{20,}/,                    // Long random strings
-      /base64|eval|unescape/i,            // Suspicious functions
-      /\.php\?.*\.js$/,                   // Dynamic JS from PHP
-      /\/tmp\/|\/temp\//,                 // Temp directories
-      /localhost:[0-9]+/,                 // Local development servers
-      /[0-9]+\.json$|\.jsonp$/           // Data files masquerading as JS
+      {
+        pattern: /[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/,
+        score: 20, // Reduced from 15
+        description: 'Direct IP address usage',
+        canBeReduced: true // Can be reduced by trusted platforms
+      },
+      {
+        pattern: /\.tk$|\.ml$|\.ga$|\.cf$/,
+        score: 30,
+        description: 'Suspicious free TLD',
+        canBeReduced: false
+      },
+      {
+        pattern: /[a-z0-9]{32,}/,  // Increased from 20 to 32 chars
+        score: 8, // Reduced from 15
+        description: 'Very long hash (likely cache busting)',
+        canBeReduced: true
+      },
+      {
+        pattern: /base64|eval|unescape/i,
+        score: 25,
+        description: 'Potentially dangerous functions',
+        canBeReduced: false
+      },
+      {
+        pattern: /\.php\?.*\.js$/,
+        score: 20,
+        description: 'Dynamic JS generation',
+        canBeReduced: true
+      },
+      {
+        pattern: /\/tmp\/|\/temp\//,
+        score: 25,
+        description: 'Temporary directory usage',
+        canBeReduced: false
+      },
+      {
+        pattern: /localhost:[0-9]+/,
+        score: 5, // Reduced - common in development
+        description: 'Local development server',
+        canBeReduced: false
+      }
     ];
 
     this.knownLibraries = {
@@ -75,7 +138,9 @@ class SecurityAnalyzer {
       library: null,
       version: null,
       isOutdated: false,
-      riskLevel: 'low' // low, medium, high, critical
+      riskLevel: 'low', // low, medium, high, critical
+      trustedPlatform: null,
+      platformContext: null
     };
 
     try {
@@ -86,6 +151,9 @@ class SecurityAnalyzer {
       // Check if external
       analysis.isExternal = hostname !== currentDomain;
 
+      // Check for trusted platforms first
+      this.identifyTrustedPlatform(url, analysis);
+
       // Check CDN
       for (const cdn of this.knownCDNs) {
         if (hostname.includes(cdn) || hostname === cdn) {
@@ -95,14 +163,14 @@ class SecurityAnalyzer {
         }
       }
 
-      // Check suspicious patterns
-      this.checkSuspiciousPatterns(url, analysis);
+      // Check suspicious patterns with context-aware scoring
+      this.checkSuspiciousPatternsContextual(url, analysis);
 
       // Detect libraries and versions
       this.detectLibrary(url, analysis);
 
-      // Calculate risk level
-      this.calculateRiskLevel(analysis);
+      // Calculate risk level with platform context
+      this.calculateRiskLevelContextual(analysis);
 
     } catch (error) {
       analysis.suspiciousScore += 20;
@@ -113,17 +181,49 @@ class SecurityAnalyzer {
     return analysis;
   }
 
-  checkSuspiciousPatterns(url, analysis) {
-    for (const pattern of this.suspiciousPatterns) {
-      if (pattern.test(url)) {
-        analysis.suspiciousScore += 15;
-        analysis.suspiciousReasons.push(`Matches suspicious pattern: ${pattern.source}`);
+  identifyTrustedPlatform(url, analysis) {
+    for (const [platformName, platformInfo] of Object.entries(this.trustedPlatforms)) {
+      // Check URL patterns
+      const matchesPattern = platformInfo.patterns.some(pattern => pattern.test(url));
+      
+      // Check IP ranges
+      const matchesIP = platformInfo.ipRanges.some(range => url.includes(range));
+      
+      if (matchesPattern || matchesIP) {
+        analysis.trustedPlatform = platformName;
+        analysis.platformContext = {
+          matchedBy: matchesPattern ? 'pattern' : 'ip',
+          riskReduction: platformInfo.riskReduction
+        };
+        break;
+      }
+    }
+  }
+
+  checkSuspiciousPatternsContextual(url, analysis) {
+    for (const patternInfo of this.suspiciousPatterns) {
+      if (patternInfo.pattern.test(url)) {
+        let score = patternInfo.score;
+        
+        // Apply risk reduction for trusted platforms
+        if (analysis.trustedPlatform && patternInfo.canBeReduced) {
+          const reduction = analysis.platformContext.riskReduction;
+          score = Math.max(1, score - reduction); // Never go below 1
+          analysis.suspiciousReasons.push(
+            `${patternInfo.description} (reduced: trusted ${analysis.trustedPlatform})`
+          );
+        } else {
+          analysis.suspiciousReasons.push(patternInfo.description);
+        }
+        
+        analysis.suspiciousScore += score;
       }
     }
 
-    // Additional checks
+    // Additional contextual checks
     if (url.includes('://') && !url.startsWith('https://')) {
-      analysis.suspiciousScore += 10;
+      const score = analysis.trustedPlatform ? 5 : 10; // Reduced for trusted platforms
+      analysis.suspiciousScore += score;
       analysis.suspiciousReasons.push('Non-HTTPS URL');
     }
 
@@ -132,9 +232,16 @@ class SecurityAnalyzer {
       analysis.suspiciousReasons.push('Path traversal attempt');
     }
 
+    // Smarter long URL detection
     if (url.length > 200) {
-      analysis.suspiciousScore += 10;
-      analysis.suspiciousReasons.push('Unusually long URL');
+      let score = 10;
+      if (analysis.trustedPlatform) {
+        score = 3; // Enterprise platforms often have long URLs
+        analysis.suspiciousReasons.push('Long URL (common for enterprise platforms)');
+      } else {
+        analysis.suspiciousReasons.push('Unusually long URL');
+      }
+      analysis.suspiciousScore += score;
     }
   }
 
@@ -177,20 +284,55 @@ class SecurityAnalyzer {
     }
   }
 
-  calculateRiskLevel(analysis) {
-    if (analysis.suspiciousScore >= 50) {
+  calculateRiskLevelContextual(analysis) {
+    let score = analysis.suspiciousScore;
+    
+    // Boost score for truly dangerous patterns
+    if (analysis.suspiciousReasons.some(reason => 
+        reason.includes('Path traversal') || 
+        reason.includes('dangerous functions') ||
+        reason.includes('Suspicious free TLD')
+    )) {
+      score += 20; // These are always serious
+    }
+    
+    // Reduce score for trusted platforms with context
+    if (analysis.trustedPlatform) {
+      // Additional reduction based on platform trust level
+      const platformBonuses = {
+        'microsoft': -5,
+        'google': -5,
+        'atlassian': -10, // Higher trust for enterprise platforms
+        'aws': -3,
+        'cloudflare': -2
+      };
+      score += platformBonuses[analysis.trustedPlatform] || 0;
+    }
+    
+    // CDN bonus
+    if (analysis.isCDN) {
+      score -= 5; // CDNs are generally safer
+    }
+    
+    // Calculate final risk level
+    if (score >= 50) {
       analysis.riskLevel = 'critical';
-    } else if (analysis.suspiciousScore >= 30) {
+    } else if (score >= 35) {
       analysis.riskLevel = 'high';
-    } else if (analysis.suspiciousScore >= 15) {
+    } else if (score >= 15) {
       analysis.riskLevel = 'medium';
     } else {
       analysis.riskLevel = 'low';
     }
 
     // Override for very safe sources
-    if (analysis.isCDN && analysis.suspiciousScore < 10) {
+    if (analysis.isCDN && score < 10) {
       analysis.riskLevel = 'low';
+    }
+    
+    // Override for trusted platforms with low scores
+    if (analysis.trustedPlatform && score < 20) {
+      analysis.riskLevel = analysis.riskLevel === 'high' ? 'medium' : analysis.riskLevel;
     }
   }
 

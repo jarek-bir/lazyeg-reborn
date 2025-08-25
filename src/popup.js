@@ -555,9 +555,14 @@ class LazyEggPopup {
       alert.className = `security-alert ${analysis.riskLevel}`;
       
       const reasons = analysis.suspiciousReasons.join(', ');
+      let platformInfo = '';
+      
+      if (analysis.trustedPlatform) {
+        platformInfo = ` (Trusted: ${analysis.trustedPlatform})`;
+      }
       
       alert.innerHTML = `
-        <div class="alert-title">⚠️ ${analysis.riskLevel.toUpperCase()} Risk File</div>
+        <div class="alert-title">⚠️ ${analysis.riskLevel.toUpperCase()} Risk File${platformInfo}</div>
         <div class="alert-description">${reasons}</div>
         <div class="alert-url">${analysis.url}</div>
       `;
